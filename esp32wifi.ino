@@ -9,7 +9,7 @@
 #include <DHT.h>
 #include <BlynkSimpleEsp32.h>
 #include <esp_eap_client.h>
-#include "secrets.h"
+#include "secret.h"
 
 #define RGB_COMMON_ANODE false
 
