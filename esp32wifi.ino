@@ -365,7 +365,6 @@ void render_lcd()
 void go_to_screen(uint8_t s)
 {
     screen = s % N_SCREENS;
-    t_lcd = millis();
     render_lcd();
     if (Blynk.connected())
         Blynk.virtualWrite(VP_NEXT, screen);
@@ -526,7 +525,10 @@ void loop()
     blynk_timer.run();
 
     if (btn_screen_pressed())
+    {
+        t_lcd = now;
         go_to_screen(screen + 1);
+    }
     if (btn_reset_pressed())
     {
         reset_minmax();
