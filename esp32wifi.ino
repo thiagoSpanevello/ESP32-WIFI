@@ -45,7 +45,7 @@
 #define VP_UNIT V16
 
 #define MS_DHT_READ 2000
-#define MS_SEND 5000
+#define MS_SEND 1000
 #define MS_LCD_AUTO 3000
 #define MS_HIST_SLOT 60000
 #define MS_DEBOUNCE 40
@@ -65,10 +65,8 @@ float hist_temp[HIST_SIZE], hist_hum[HIST_SIZE];
 uint8_t hist_count = 0;
 float acc_temp = 0, acc_hum = 0;
 uint32_t acc_n = 0;
-
 bool led1 = false, led2 = false;
 uint8_t rgb_r = 0, rgb_g = 0, rgb_b = 0;
-
 bool sw_block = false, sw_led1 = false, sw_led2 = false, sw_unit = false;
 bool sw_led1_last = false, sw_led2_last = false;
 bool sw_block_last = false, sw_unit_last = false;
@@ -87,7 +85,6 @@ NetState net_state = NET_INIT;
 uint32_t net_state_t = 0;
 
 uint32_t t_dht = 0, t_hist = 0, t_lcd = 0;
-
 bool btn_screen_state = false, btn_screen_last = false;
 bool btn_reset_state = false, btn_reset_last = false;
 unsigned long btn_screen_t = 0, btn_reset_t = 0;
@@ -234,6 +231,7 @@ BLYNK_CONNECTED()
     Blynk.syncAll();
     sync_leds();
     sync_switches();
+    Blynk.virtualWrite(VP_NEXT, screen);
 }
 
 BLYNK_WRITE(VP_LED1)
@@ -299,7 +297,6 @@ void render_lcd()
     float tc = isnan(temp_c) ? 0 : temp_c;
     float tf = isnan(temp_f) ? 0 : temp_f;
     float uh = isnan(humidity) ? 0 : humidity;
-
     switch (screen)
     {
     case 0:
@@ -516,7 +513,6 @@ void loop()
     uint32_t now = millis();
 
     handle_net();
-
     if (net_state == NET_CONNECTED)
     {
         Blynk.run();
