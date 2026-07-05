@@ -45,7 +45,7 @@
 #define VP_UNIT V16
 
 #define MS_DHT_READ 2000
-#define MS_SEND 1000
+#define MS_SEND 5000
 #define MS_LCD_AUTO 3000
 #define MS_HIST_SLOT 60000
 #define MS_DEBOUNCE 40
@@ -89,9 +89,12 @@ bool btn_screen_state = false, btn_screen_last = false;
 bool btn_reset_state = false, btn_reset_last = false;
 unsigned long btn_screen_t = 0, btn_reset_t = 0;
 
+// Alterna para a tela indicada (cíclica) e atualiza o LCD.
 void go_to_screen(uint8_t s);
+// Atualiza o conteúdo do display LCD conforme a tela atual.
 void render_lcd();
 
+// Verifica o botão de troca de tela utilizando debounce.
 bool btn_screen_pressed()
 {
     bool raw = digitalRead(PIN_BTN_SCREEN);
@@ -110,6 +113,7 @@ bool btn_screen_pressed()
     return false;
 }
 
+// Verifica o botão de reset utilizando debounce.
 bool btn_reset_pressed()
 {
     bool raw = digitalRead(PIN_BTN_RESET);
@@ -131,22 +135,26 @@ bool btn_reset_pressed()
 void apply_led1() { digitalWrite(PIN_LED1, led1 ? HIGH : LOW); }
 void apply_led2() { digitalWrite(PIN_LED2, led2 ? HIGH : LOW); }
 
+// Atualiza a intensidade das três cores do LED RGB via PWM.
 void apply_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     rgb_r = r;
     rgb_g = g;
     rgb_b = b;
+    // O operador ternário inverte o PWM caso o LED seja de ânodo comum.
     ledcWrite(PIN_RGB_R, RGB_COMMON_ANODE ? 255 - r : r);
     ledcWrite(PIN_RGB_G, RGB_COMMON_ANODE ? 255 - g : g);
     ledcWrite(PIN_RGB_B, RGB_COMMON_ANODE ? 255 - b : b);
 }
 
+// Reinicia os valores mínimos e máximos medidos.
 void reset_minmax()
 {
     temp_min = temp_max = temp_c;
     hum_min = hum_max = humidity;
 }
 
+// Lê temperatura e umidade do DHT22 e atualiza estatísticas.
 void read_sensor()
 {
     float t = dht.readTemperature();
@@ -171,6 +179,7 @@ void read_sensor()
     acc_n++;
 }
 
+// Armazena a média das leituras no histórico; quando cheio, descarta a mais antiga.
 void push_history()
 {
     if (acc_n == 0)
@@ -187,6 +196,7 @@ void push_history()
     }
     else
     {
+        // Desloca o histórico uma posição para remover a leitura mais antiga.
         memmove(hist_temp, hist_temp + 1, (HIST_SIZE - 1) * sizeof(float));
         memmove(hist_hum, hist_hum + 1, (HIST_SIZE - 1) * sizeof(float));
         hist_temp[HIST_SIZE - 1] = mt;
@@ -194,6 +204,7 @@ void push_history()
     }
 }
 
+// Sincroniza o estado dos LEDs com o aplicativo Blynk.
 void sync_leds()
 {
     if (!Blynk.connected())
@@ -202,6 +213,7 @@ void sync_leds()
     Blynk.virtualWrite(VP_LED2, led2 ? 1 : 0);
 }
 
+// Sincroniza o estado das chaves físicas com o Blynk.
 void sync_switches()
 {
     if (!Blynk.connected())
@@ -210,6 +222,7 @@ void sync_switches()
     Blynk.virtualWrite(VP_UNIT, sw_unit ? 1 : 0);
 }
 
+// Envia os dados de sensores e rede ao Blynk.
 void send_telemetry()
 {
     if (!Blynk.connected())
@@ -291,6 +304,7 @@ const char *net_state_str()
     return "?";
 }
 
+// Atualiza o conteúdo do display LCD conforme a tela atual.
 void render_lcd()
 {
     lcd.clear();
@@ -359,14 +373,17 @@ void render_lcd()
     }
 }
 
+// Alterna para a tela indicada (cíclica) e atualiza o LCD.
 void go_to_screen(uint8_t s)
 {
+    // Usa o operador módulo para voltar à primeira tela após a última.
     screen = s % N_SCREENS;
     render_lcd();
     if (Blynk.connected())
         Blynk.virtualWrite(VP_NEXT, screen);
 }
 
+// Lê as chaves físicas e atualiza LEDs e aplicativo quando houver alterações.
 void read_switches()
 {
     bool nb = digitalRead(PIN_SW_BLOCK);
@@ -401,6 +418,7 @@ void read_switches()
     }
 }
 
+// Configura a conexão Wi-Fi WPA2-Enterprise (eduroam).
 void begin_wifi()
 {
     WiFi.disconnect(true);
@@ -412,6 +430,7 @@ void begin_wifi()
     WiFi.begin("eduroam");
 }
 
+// Máquina de estados responsável pela conexão e reconexão da rede.
 void handle_net()
 {
     uint32_t now = millis();
@@ -449,6 +468,7 @@ void handle_net()
     }
 }
 
+// Inicializa todos os periféricos, sensores, LCD, Wi-Fi e Blynk.
 void setup()
 {
     Serial.begin(115200);
@@ -508,6 +528,7 @@ void setup()
     go_to_screen(0);
 }
 
+// Loop principal do programa.
 void loop()
 {
     uint32_t now = millis();
